@@ -13,39 +13,51 @@ import { generateMealPlan } from "@/lib/utils/api";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { createApi } from 'unsplash-js';
+import { createApi } from "unsplash-js";
 
 const unsplash = createApi({
-  accessKey: process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY,
+  accessKey: process.env.NEXT_PUBLIC_UNSPLASH_ACCESS_KEY || "",
 });
 
-const MealImage = ({ mealName }) => {
-  const [imageUrl, setImageUrl] = useState('');
+interface MealImageProps {
+  mealName: string;
+}
+
+const MealImage: React.FC<MealImageProps> = ({ mealName }) => {
+  const [imageUrl, setImageUrl] = useState("");
 
   useEffect(() => {
-    unsplash.search.getPhotos({
-      query: mealName,
-      page: 1,
-      perPage: 1,
-    }).then(result => {
-      if (result.response && result.response.results.length > 0) {
-        setImageUrl(result.response.results[0].urls.regular);
-      }
-    }).catch(() => {
-      // Handle error
-    });
+    unsplash.search
+      .getPhotos({
+        query: mealName,
+        page: 1,
+      })
+      .then((result) => {
+        if (result.response && result.response.results.length > 0) {
+          setImageUrl(result.response.results[0].urls.small);
+        }
+      });
   }, [mealName]);
 
   return (
-    <Image
-      src={imageUrl}
-      alt={mealName}
-      width={400}
-      height={300}
-      className="rounded-lg mt-4"
-    />
+    <div>
+      {imageUrl && (
+        <Image src={imageUrl} alt={mealName} width={500} height={300} />
+      )}
+    </div>
   );
 };
+
+interface Meal {
+  name: string;
+  description: string;
+  calories: number;
+}
+
+interface MealPlan {
+  date: string;
+  meals: Meal[];
+}
 
 export default function MealPlansPage() {
   const { preferences, mealPlans, addMealPlan } = useUserStore();
@@ -82,14 +94,14 @@ export default function MealPlansPage() {
       </div>
       {mealPlans.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {mealPlans.map((plan, index) => (
+          {mealPlans.map((plan: MealPlan, index) => (
             <Card key={index}>
               <CardHeader>
                 <CardTitle>{plan.date}</CardTitle>
                 <CardDescription>Daily Meal Plan</CardDescription>
               </CardHeader>
               <CardContent>
-                {plan.meals.map((meal, mealIndex) => (
+                {plan.meals.map((meal: Meal, mealIndex) => (
                   <div key={mealIndex} className="mb-4">
                     <h3 className="font-semibold">{meal.name}</h3>
                     <p className="text-sm text-muted-foreground">
